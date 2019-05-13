@@ -118,6 +118,7 @@ class Basket extends Component {
       if (response.status === 201) {
         alert("Product added");
         const basket = await response.json();
+		console.log(basket);
         this.setState({ basket });
       } else {
         const serverError = await response.json();
@@ -144,6 +145,7 @@ class Basket extends Component {
       if (response.status === 201) {
         alert("Discount added");
         const basket = await response.json();
+		console.log(basket);
         this.setState({ basket });
       } else {
         const serverError = await response.json();
@@ -169,6 +171,7 @@ class Basket extends Component {
       if (response.status === 201) {
         alert("Discount added");
         const basket = await response.json();
+		console.log(basket);
         this.setState({ basket });
       } else {
         const serverError = await response.json();
@@ -210,10 +213,10 @@ class Basket extends Component {
               <div>
                 <input value={quantityToAdd} type="number" name="quantityToAdd" onChange={e => this.handleInput(e, null, true)} />
                 <select value={productToAdd} name="productToAdd" className="form-control form-control-sm" onChange={this.handleInput}>
-                  {products.map(product => {
-                    return (
+                  {products.map(product => {               
+				   return (
                       <option value={product.id} key={product.id}>
-                        {product.name}
+                        {product.name+" "+product.pricePerUnit+"$"}
                       </option>
                     );
                   })}

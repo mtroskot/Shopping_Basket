@@ -1,14 +1,31 @@
 package com.mtroskot.utils.validation;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.mtroskot.utils.validation.ValidationUtils;
+import com.mtroskot.exception.AppException;
+import com.mtroskot.model.entity.discount.FreeProductDiscount;
+import com.mtroskot.model.entity.product.Bread;
+import com.mtroskot.model.entity.product.ProductCategory;
+import com.mtroskot.model.entity.product.ShoppingBasket;
 
 @RunWith(SpringRunner.class)
 public class ValidationUtilsTest {
+
+	private final String DISCOUNT_MESSAGE_1 = "Discount percentage cannot be less than 0";
+	private final String DISCOUNT_MESSAGE_2 = "Discount percentage cannot be greater than 1";
+	private final String PRODUCT_AMOUNT = "Amount of products cannot be less than 1";
+	private final String PRODUCT = "Product cannot be null";
+	private final String DISCOUNT = "Discount cannot be null";
+	private final String BASKET = "Basket cannot be null";
+	private final String CATEGORY = "Product category cannot be null";
+	private final String PRICE = "Price cannot be less than 0";
+	private final String NAME_1 = "Name cannot be null";
+	private final String NAME_2 = "Name cannot be blank";
 
 	@Test
 	public void emailRegexTest() {
@@ -160,6 +177,150 @@ public class ValidationUtilsTest {
 		Assert.assertEquals("Validate should return false", false, ValidationUtils.validate(null, ValidationUtils.PATTERN_EMAIL));
 		Assert.assertEquals("Validate should return false", false, ValidationUtils.validate("marko.com", ValidationUtils.PATTERN_EMAIL));
 		Assert.assertEquals("Validate should return true", true, ValidationUtils.validate("marko@gotmail.com", ValidationUtils.PATTERN_EMAIL));
+	}
+
+	@Test
+	public void validateDiscountPercentageTest1() {
+		try {
+			ValidationUtils.validateDiscountPercentage(-0.01);
+		} catch (AppException e) {
+			assertEquals("Message should be DISCOUNT_MESSAGE_1", DISCOUNT_MESSAGE_1, e.getMessage());
+		}
+		try {
+			ValidationUtils.validateDiscountPercentage(1.01);
+		} catch (AppException e) {
+			assertEquals("Message should be DISCOUNT_MESSAGE_2", DISCOUNT_MESSAGE_2, e.getMessage());
+		}
+	}
+
+	@Test
+	public void validateDiscountPercentageTest2() {
+		ValidationUtils.validateDiscountPercentage(1);
+		ValidationUtils.validateDiscountPercentage(0);
+		ValidationUtils.validateDiscountPercentage(0.5);
+		ValidationUtils.validateDiscountPercentage(0.9);
+	}
+
+	@Test
+	public void validateProductDiscountAmountTest1() {
+		try {
+			ValidationUtils.validateProductDiscountAmount(-1);
+		} catch (AppException e) {
+			assertEquals("Message should be PRODUCT_AMOUNT", PRODUCT_AMOUNT, e.getMessage());
+		}
+		try {
+			ValidationUtils.validateDiscountPercentage(0);
+		} catch (AppException e) {
+			assertEquals("Message should be PRODUCT_AMOUNT", PRODUCT_AMOUNT, e.getMessage());
+		}
+	}
+
+	@Test
+	public void validateProductDiscountAmountTest2() {
+		ValidationUtils.validateProductDiscountAmount(1);
+		ValidationUtils.validateProductDiscountAmount(5);
+		ValidationUtils.validateProductDiscountAmount(10);
+		ValidationUtils.validateProductDiscountAmount(100);
+		ValidationUtils.validateProductDiscountAmount(101);
+	}
+
+	@Test
+	public void validateProductTest1() {
+		try {
+			ValidationUtils.validateProduct(null);
+		} catch (AppException e) {
+			assertEquals("Message should be PRODUCT", PRODUCT, e.getMessage());
+		}
+	}
+
+	@Test
+	public void validateProductTest2() {
+		ValidationUtils.validateProduct(new Bread());
+	}
+
+	@Test
+	public void validateDiscountTest1() {
+		try {
+			ValidationUtils.validateDiscount(null);
+		} catch (AppException e) {
+			assertEquals("Message should be DISCOUNT", DISCOUNT, e.getMessage());
+		}
+	}
+
+	@Test
+	public void validateDiscountTest2() {
+		ValidationUtils.validateDiscount(new FreeProductDiscount());
+	}
+
+	@Test
+	public void validateShoppingBasketTest1() {
+		try {
+			ValidationUtils.validateShoppingBasket(null);
+		} catch (AppException e) {
+			assertEquals("Message should be BASKET", BASKET, e.getMessage());
+		}
+	}
+
+	@Test
+	public void validateShoppingBasketTest2() {
+		ValidationUtils.validateShoppingBasket(new ShoppingBasket());
+	}
+
+	@Test
+	public void validateProductCategoryTest1() {
+		try {
+			ValidationUtils.validateProductCategory(null);
+		} catch (AppException e) {
+			assertEquals("Message should be CATEGORY", CATEGORY, e.getMessage());
+		}
+	}
+
+	@Test
+	public void validateProductCategoryTest2() {
+		ValidationUtils.validateProductCategory(new ProductCategory());
+	}
+
+	@Test
+	public void validatePriceTest1() {
+		try {
+			ValidationUtils.validatePrice(-0.01);
+		} catch (AppException e) {
+			assertEquals("Message should be PRICE", PRICE, e.getMessage());
+		}
+	}
+
+	@Test
+	public void validatePriceTest2() {
+		ValidationUtils.validatePrice(142.2);
+		ValidationUtils.validatePrice(0.5);
+		ValidationUtils.validatePrice(10.5);
+		ValidationUtils.validatePrice(0.9);
+	}
+
+	@Test
+	public void validateNameTest1() {
+		try {
+			ValidationUtils.validateName(null);
+		} catch (AppException e) {
+			assertEquals("Message should be NAME_1", NAME_1, e.getMessage());
+		}
+		try {
+			ValidationUtils.validateName("");
+		} catch (AppException e) {
+			assertEquals("Message should be NAME_2", NAME_2, e.getMessage());
+		}
+		try {
+			ValidationUtils.validateName("     ");
+		} catch (AppException e) {
+			assertEquals("Message should be NAME_2", NAME_2, e.getMessage());
+		}
+	}
+
+	@Test
+	public void validateNameTest2() {
+		ValidationUtils.validateName("Marko");
+		ValidationUtils.validateName("Luka");
+		ValidationUtils.validateName("Ivan");
 	}
 
 }

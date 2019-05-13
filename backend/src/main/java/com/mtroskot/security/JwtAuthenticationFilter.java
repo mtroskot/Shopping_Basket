@@ -15,7 +15,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.mtroskot.service.impl.UserDetailsServiceImpl;
+import com.mtroskot.exception.AppException;
+import com.mtroskot.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtTokenProvider tokenProvider;
-	private final UserDetailsServiceImpl userDetailsService;
+	private final UserService userService;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -37,8 +38,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
 				Long userId = tokenProvider.getUserIdFromJWT(jwt);
 
-				UserDetails userDetails = userDetailsService.loadUserById(userId);
-				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities()); //saving credentials as blank,because user password not needed
+				UserDetails userDetails = userService.findById(userId).orElseThrow(() -> new AppException("User not found with id : " + userId));
+				// saving credentials as blank,because user password not needed
+				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
 				authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
 				SecurityContextHolder.getContext().setAuthentication(authentication);

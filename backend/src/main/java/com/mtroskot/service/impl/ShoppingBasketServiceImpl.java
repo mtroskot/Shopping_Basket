@@ -19,6 +19,7 @@ import com.mtroskot.model.entity.product.Product;
 import com.mtroskot.model.entity.product.ShoppingBasket;
 import com.mtroskot.repository.ShoppingBasketRepositroy;
 import com.mtroskot.service.ShoppingBasketService;
+import com.mtroskot.utils.validation.ValidationUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,7 +31,7 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 
 	@Override
 	public ShoppingBasket getTotalPriceWithoutDiscounts(ShoppingBasket basket) {
-		checkIfBasketIsNull(basket);
+		ValidationUtils.validateShoppingBasket(basket);
 		double sum = 0;
 		for (Map.Entry<String, List<Product>> entry : basket.getProductsMap().entrySet()) {
 			List<Product> products = entry.getValue();
@@ -42,7 +43,7 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 
 	@Override
 	public ShoppingBasket calculateTotalPriceWithDiscounts(ShoppingBasket basket) {
-		checkIfBasketIsNull(basket);
+		ValidationUtils.validateShoppingBasket(basket);
 		Set<Discount> discounts = basket.getDiscounts();
 		for (Discount discount : discounts) {
 			if (discount.getDiscountType() == DiscountType.BUY_N_PRODUCTS_GET_Y_PRODUCTS_FOR_FREE) {
@@ -50,7 +51,7 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 				Product productToBuy = freeProductDiscount.getProductToBuy();
 				List<Product> productListFromBasket = basket.getProductsMap().get(productToBuy.getPrimaryKey());
 
-				if (productListFromBasket != null) { // productToBuy was found in basket, checking how many free product user has  achieved
+				if (productListFromBasket != null) { // productToBuy was found in basket, checking how many free product user has achieved
 					int amountOfFreeProductDiscountAchieved = 0;
 					// if productToBuy is same as productToGetFree, than we need one more productToBuy to apply free discount
 					if (productToBuy.equals(freeProductDiscount.getProductToApplyDiscount())) {
@@ -98,7 +99,7 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 							for (int i = 0; i < amountOfProductsToApplyDiscount && i < productListToApplyDiscount.size(); i++) {
 								Product productToApplyDiscount = productListToApplyDiscount.get(i);
 								if (productToApplyDiscount.getDiscountPercentage() != 0) {// product has already a price discount,skipping
-									amountOfProductsToApplyDiscount++; // incrementing because this product has already a price discount,the discount could not be used, trying to apply the discount on the next product if present
+									amountOfProductsToApplyDiscount++; // incrementing because this product has already a price discount,the discount  could not be used, trying to apply the discount on the next product if present
 									continue;
 								}
 								double priceAfterDiscount = productToApplyDiscount.getPricePerUnit()
@@ -124,7 +125,7 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 	 * @return The ShoppingBasket whose price was requested.
 	 */
 	private void getTotalPriceWithDiscounts(ShoppingBasket basket) {
-		checkIfBasketIsNull(basket);
+		ValidationUtils.validateShoppingBasket(basket);
 		double sum = 0;
 		for (Map.Entry<String, List<Product>> entry : basket.getProductsMap().entrySet()) {
 			List<Product> products = entry.getValue();
@@ -144,7 +145,7 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 		if (productList == null) {// if productList is null, map did not contain that product, creating a new list
 			productList = new LinkedList<>();
 		}
-		productList.add(product.clone()); // we want each product in list to be independent, changes on one product should not affect other products
+		productList.add(product.clone()); // we want each product in list to be independent, changes on one product should  not affect other products
 		basket.getProductCountMap().put(product, productList.size());
 		basket.getProductsMap().put(product.getPrimaryKey(), productList);
 	}
@@ -160,7 +161,7 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 			productList = new LinkedList<>();
 		}
 		for (int i = 0; i < quantity; i++) {
-			productList.add(product.clone()); // we want each product in list to be independent, changes on one product should not affect other products
+			productList.add(product.clone()); // we want each product in list to be independent, changes on one product should  not affect other products
 		}
 		basket.getProductCountMap().put(product, productList.size());
 		basket.getProductsMap().put(product.getPrimaryKey(), productList);
@@ -170,7 +171,7 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 	public void updateProduct(ShoppingBasket basket, Product product) {
 		checkIfBasketOrProductIsNull(basket, product);
 		List<Product> productList = basket.getProductsMap().get(product.getPrimaryKey());
-		if (!CollectionUtils.isEmpty(productList)) { // if productList is not null or empty, we can update the last product from productList
+		if (!CollectionUtils.isEmpty(productList)) { // if productList is not null or empty, we can update the last product from  productList
 			productList.set(productList.size() - 1, product); // updating the last product in productList
 			basket.getProductsMap().put(product.getPrimaryKey(), productList);
 		} else { // if productList is null, the map doesn't contain that product
@@ -182,7 +183,7 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 	public void removeProduct(ShoppingBasket basket, Product product) {
 		checkIfBasketOrProductIsNull(basket, product);
 		List<Product> productList = basket.getProductsMap().get(product.getPrimaryKey());
-		if (!CollectionUtils.isEmpty(productList)) { // if productList is not null or empty, we can remove one product from productList
+		if (!CollectionUtils.isEmpty(productList)) { // if productList is not null or empty, we can remove one product from  productList
 			productList.remove(0);
 			if (productList.isEmpty()) {// productList empty, we can remove entry from map
 				basket.getProductsMap().remove(product.getPrimaryKey());
@@ -200,9 +201,9 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 		}
 		List<Product> productList = basket.getProductsMap().get(product.getPrimaryKey());
 		if (!CollectionUtils.isEmpty(productList)) { // if productList is not null or empty, we can remove products from productList
-			if (productList.size() <= quantity) { // if productList size is less or equal to quantity of products to remove, than we can remove the entry in map that holds that list
+			if (productList.size() <= quantity) { // if productList size is less or equal to quantity of products to remove, than  we can remove the entry in map that holds that list
 				basket.getProductsMap().remove(product.getPrimaryKey());
-			} else { // if productList size is greater than quantity of products to remove, than we need to remove the specified number of products from list
+			} else { // if productList size is greater than quantity of products to remove, than we  need to remove the specified number of products from list
 				basket.getProductsMap().put(product.getPrimaryKey(), productList.subList(0, productList.size() - quantity));
 			}
 		} else {
@@ -234,22 +235,8 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 	 *            The product to be checked.
 	 */
 	private void checkIfBasketOrProductIsNull(ShoppingBasket basket, Product product) {
-		checkIfBasketIsNull(basket);
-		if (product == null) {
-			throw new AppException("Supplied product is null");
-		}
-	}
-
-	/**
-	 * Checks if basket is null. Throws exception in case of null.
-	 * 
-	 * @param basket
-	 *            The ShoppingBasket to be checked.
-	 */
-	private void checkIfBasketIsNull(ShoppingBasket basket) {
-		if (basket == null) {
-			throw new AppException("Supplied basket is null");
-		}
+		ValidationUtils.validateShoppingBasket(basket);
+		ValidationUtils.validateProduct(product);
 	}
 
 	@Override
@@ -262,8 +249,8 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 		} else {
 			basket = basketByUser.get();
 		}
-
-		for (Map.Entry<Product, Integer> entry : basket.getProductCountMap().entrySet()) {
+		//if productCountMap is not empty,populating product map with products and quantity from productCountMap 
+		for (Map.Entry<Product, Integer> entry : basket.getProductCountMap().entrySet()) { 
 			Product product = entry.getKey();
 			Integer quantity = entry.getValue();
 			addProducts(basket, product, quantity);
@@ -274,7 +261,7 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 
 	@Override
 	public ShoppingBasket save(ShoppingBasket basket) {
-		checkIfBasketIsNull(basket);
+		ValidationUtils.validateShoppingBasket(basket);
 		getTotalPriceWithoutDiscounts(basket);
 		calculateTotalPriceWithDiscounts(basket);
 		return basketRepository.save(basket);
@@ -282,13 +269,14 @@ public class ShoppingBasketServiceImpl implements ShoppingBasketService {
 
 	@Override
 	public void addDiscount(ShoppingBasket basket, Discount discount) {
-		checkIfBasketIsNull(basket);
+		ValidationUtils.validateShoppingBasket(basket);
+		ValidationUtils.validateDiscount(discount);
 		basket.getDiscounts().add(discount);
 	}
 
 	@Override
 	public void empty(ShoppingBasket basket) {
-		checkIfBasketIsNull(basket);
+		ValidationUtils.validateShoppingBasket(basket);
 		basket.getDiscounts().clear();
 		basket.getProductCountMap().clear();
 		basket.getProductsMap().clear();

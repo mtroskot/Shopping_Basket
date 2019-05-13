@@ -5,8 +5,10 @@ import java.util.regex.Pattern;
 import org.springframework.util.StringUtils;
 
 import com.mtroskot.exception.AppException;
+import com.mtroskot.model.entity.discount.Discount;
 import com.mtroskot.model.entity.product.Product;
 import com.mtroskot.model.entity.product.ProductCategory;
+import com.mtroskot.model.entity.product.ShoppingBasket;
 
 public class ValidationUtils {
 	// RFC822 compliant regex
@@ -35,8 +37,7 @@ public class ValidationUtils {
 	 * @return boolean
 	 */
 	public static boolean validate(final String stringToValidate, Pattern validationPattern) {
-		// checking if null,because Pattern.matcher returns null pointer exception if
-		// string is null
+		// checking if null,because Pattern.matcher returns null pointer exception if string is null
 		if (stringToValidate == null) {
 			return false;
 		}
@@ -76,9 +77,32 @@ public class ValidationUtils {
 	 * @param product
 	 *            The product to be checked.
 	 */
-	public static void validateProductForDiscount(Product product) {
+	public static void validateProduct(Product product) {
 		if (product == null) {
 			throw new AppException("Product cannot be null");
+		}
+	}
+	
+	/**
+	 * Checks if product is null.
+	 * 
+	 * @param product
+	 *            The product to be checked.
+	 */
+	public static void validateDiscount(Discount discount) {
+		if (discount == null) {
+			throw new AppException("Discount cannot be null");
+		}
+	}
+	/**
+	 * Checks if basket is null.
+	 * 
+	 * @param basket
+	 *            The ShoppingBasket to be checked.
+	 */
+	public static void validateShoppingBasket(ShoppingBasket basket) {
+		if (basket == null) {
+			throw new AppException("Basket cannot be null");
 		}
 	}
 

@@ -1,5 +1,7 @@
 package com.mtroskot.security;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -16,7 +18,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,7 +30,6 @@ import com.mtroskot.model.entity.auth.Role.RoleType;
 import com.mtroskot.model.entity.auth.User;
 import com.mtroskot.model.request.SignUpRequest;
 import com.mtroskot.service.RoleService;
-import com.mtroskot.service.impl.UserDetailsServiceImpl;
 import com.mtroskot.service.impl.UserServiceImpl;
 
 @RunWith(SpringRunner.class)
@@ -37,6 +40,7 @@ public class AuthControllerTest {
 	private MockMvc mockMvc;
 	@Autowired
 	private ObjectMapper objectMapper;
+	
 
 	@MockBean
 	private AuthenticationManager authenticationManager;
@@ -48,9 +52,8 @@ public class AuthControllerTest {
 	private PasswordEncoder passwordEncoder;
 	@MockBean
 	private JwtTokenProvider tokenProvider;
-
 	@MockBean
-	private UserDetailsServiceImpl userDetailsService;
+	private UserDetailsService userDetailsService;
 	@MockBean
 	private JwtAuthenticationEntryPoint unauthorizedHandler;
 
@@ -59,6 +62,7 @@ public class AuthControllerTest {
 	private String passwordsNoMatch = "Passwords don't match";
 	private String notSuccessful = "Creating user not successful";
 
+	
 	/*
 	 * Should return HTTP code 400, because request body is missing
 	 */
@@ -145,8 +149,7 @@ public class AuthControllerTest {
 	}
 
 	/*
-	 * Should return HTTP code 201, because validation not passed in userService
-	 * save method
+	 * Should return HTTP code 201, user registered
 	 */
 	@Test
 	public void registerUserTest7() throws Exception {
@@ -159,8 +162,15 @@ public class AuthControllerTest {
 		Mockito.when(roleService.findByType(ArgumentMatchers.any(RoleType.class))).thenReturn(Optional.of(role));
 		User user = new User();
 		Mockito.when(userService.save(ArgumentMatchers.any(User.class), ArgumentMatchers.anyBoolean())).thenReturn(user);
-		 
+
 		mockMvc.perform(post("/api/auth/signup").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(signUpRequest)).characterEncoding("UTF-8"))
 				.andDo(print()).andExpect(status().is(201)).andExpect(content().json(objectMapper.writeValueAsString(user)));
+	}
+
+	/* Should return 200 and the current user */
+	@Test
+	@WithMockUser(username = "testuser", password = "testpass", authorities = "ROLE_USER")
+	public void getCurrentUserTest2() throws Exception {
+		mockMvc.perform(get("/api/auth/currentUser")).andDo(print()).andExpect(status().is(200)).andExpect(content().string(containsString("testuser")));
 	}
 }

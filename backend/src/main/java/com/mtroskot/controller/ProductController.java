@@ -24,7 +24,7 @@ public class ProductController {
 	 * @return Iterable<Product>
 	 */
 	@GetMapping("/all")
-	public Iterable<Product> getCurrentUser() {
+	public Iterable<Product> getAllProducts() {
 		return productService.findAll();
 	}
 

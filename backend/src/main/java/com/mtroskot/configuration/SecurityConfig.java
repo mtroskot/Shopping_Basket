@@ -7,10 +7,12 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.BeanIds;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -18,14 +20,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import com.mtroskot.security.JwtAuthenticationEntryPoint;
 import com.mtroskot.security.JwtAuthenticationFilter;
 import com.mtroskot.security.JwtTokenProvider;
-import com.mtroskot.service.impl.UserDetailsServiceImpl;
+import com.mtroskot.service.UserService;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(securedEnabled = true, jsr250Enabled = true, prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Autowired
-	private UserDetailsServiceImpl userDetailsService;
+	private UserDetailsService userDetailsService;
+	@Autowired
+	private UserService userService;
 	@Autowired
 	private JwtAuthenticationEntryPoint unauthorizedHandler;
 	@Autowired
@@ -33,7 +38,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	public JwtAuthenticationFilter jwtAuthenticationFilter() {
-		return new JwtAuthenticationFilter(tokenProvider, userDetailsService);
+		return new JwtAuthenticationFilter(tokenProvider, userService);
 	}
 
 	@Bean(BeanIds.AUTHENTICATION_MANAGER)

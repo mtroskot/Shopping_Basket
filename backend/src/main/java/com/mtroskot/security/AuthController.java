@@ -7,7 +7,6 @@ import javax.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -63,8 +62,12 @@ public class AuthController {
 		return new ResponseEntity<JwtAuthenticationResponse>(new JwtAuthenticationResponse(jwt), HttpStatus.OK);
 	}
 
+	/**
+	 * Gets current user from security context.
+	 * 
+	 * @return The current logged user.
+	 */
 	@GetMapping("/currentUser")
-	@PreAuthorize("hasRole('USER')")
 	public UserDetails getCurrentUser() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		return (UserDetails) authentication.getPrincipal();
@@ -94,12 +97,10 @@ public class AuthController {
 		Role userRole = roleService.findByType(RoleType.USER).orElseThrow(() -> new AppException("User Role not found."));
 		Set<Role> roleSet = Collections.singleton(userRole);
 		User user = signUpRequest.toUser(roleSet, passwordEncoder);
-		boolean encodePassword = false; // no need to encode password, because password is encoded in
-										// signUpRequest.toUser() method
+		boolean encodePassword = false; // no need to encode password, because password is encoded in signUpRequest.toUser() method
 		User savedUser = userService.save(user, encodePassword);
 
-		// savedUser is null,if the user didn't pass the validation in
-		// userService.save() method
+		// savedUser is null,if the user didn't pass the validation in userService.save() method
 		if (savedUser != null) {
 			return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
 		}

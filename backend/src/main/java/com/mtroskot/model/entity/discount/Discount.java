@@ -57,12 +57,12 @@ public abstract class Discount extends BaseEntity {
 	}
 
 	public void setProductToBuy(Product productToBuy) {
-		ValidationUtils.validateProductForDiscount(productToBuy);
+		ValidationUtils.validateProduct(productToBuy);
 		this.productToBuy = productToBuy;
 	}
 
 	public void setProductToGetDiscount(Product productToGetDiscount) {
-		ValidationUtils.validateProductForDiscount(productToGetDiscount);
+		ValidationUtils.validateProduct(productToGetDiscount);
 		this.productToApplyDiscount = productToGetDiscount;
 	}
 

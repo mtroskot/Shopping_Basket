@@ -37,8 +37,9 @@ public class ShoppingBasketServiceTest {
 	@Mock
 	private ShoppingBasketRepositroy basketRepository;
 	private final double DELTA = 0.001;
-	private String basketNullMessage = "Supplied basket is null";
-	private String productNullMessage = "Supplied product is null";
+	private String basketNullMessage = "Basket cannot be null";
+	private String productNullMessage = "Product cannot be null";
+	private String discountNullMessage = "Discount cannot be null";
 
 	@Before
 	public void setup() {
@@ -305,26 +306,6 @@ public class ShoppingBasketServiceTest {
 		Assert.assertEquals("Total price with discount should be 36.816", 36.816, basket.getTotalPriceWithDiscounts(), DELTA);
 		Assert.assertEquals("Discount percentage should be 0.2", 0.2, basket.getTotalBillDiscountPercentage(), DELTA);
 		Assert.assertEquals("Discount size is 0", 0, basket.getDiscounts().size());
-	}
-
-	/* Basket is null should throw AppException */
-	@Test
-	public void checkIfBasketIsNullTest1() {
-		ShoppingBasket basket = null;
-
-		try {
-			ReflectionTestUtils.invokeMethod(shoppingBasketService, "checkIfBasketIsNull", basket);
-		} catch (AppException e) {
-			Assert.assertEquals("Message should be basketNullMessage", basketNullMessage, e.getMessage());
-		}
-	}
-
-	/* Basket is not null should pass validation */
-	@Test
-	public void checkIfBasketIsNullTest2() {
-		ShoppingBasket basket = new ShoppingBasket();
-
-		ReflectionTestUtils.invokeMethod(shoppingBasketService, "checkIfBasketIsNull", basket);
 	}
 
 	/* Basket is null,product is null should throw AppException */
@@ -1536,15 +1517,183 @@ public class ShoppingBasketServiceTest {
 		Assert.assertEquals("Milk list[0] price is 0 free milk", 0, basket.getProductsMap().get(milk.getPrimaryKey()).get(0).getPricePerUnit(), DELTA);
 	}
 
+	/* User has no basket, creating new */
 	@Test
 	public void findByUserTest1() {
-
 		Mockito.when(basketRepository.findByUser(ArgumentMatchers.any(User.class))).thenReturn(Optional.ofNullable(null));
 
 		User user = new User();
+		user.setId(1L);
 		ShoppingBasket findByUser = shoppingBasketService.findByUser(user);
 
 		Assert.assertEquals("Basket user is equal to user", user, findByUser.getUser());
+		Assert.assertEquals("User id is 1", 1L, findByUser.getUser().getId().longValue());
+		Assert.assertEquals("Product count map is empty true", true, findByUser.getProductCountMap().isEmpty());
+		Assert.assertEquals("Product map is empty true", true, findByUser.getProductsMap().isEmpty());
 	}
 
+	/* User has basket, populating with data */
+	@Test
+	public void findByUserTest2() {
+		ShoppingBasket shoppingBasket = new ShoppingBasket();
+		Product bread = new Bread("Bread", 1, 0, new Timestamp(new Date().getTime()));
+		bread.setId(1L);
+		shoppingBasket.getProductCountMap().put(bread, 3);
+
+		Mockito.when(basketRepository.findByUser(ArgumentMatchers.any(User.class))).thenReturn(Optional.of(shoppingBasket));
+
+		User user = new User();
+		user.setId(1L);
+		shoppingBasket.setUser(user);
+		ShoppingBasket findByUser = shoppingBasketService.findByUser(user);
+
+		Assert.assertEquals("Basket user is equal to user", user, findByUser.getUser());
+		Assert.assertEquals("User id is 1", 1L, findByUser.getUser().getId().longValue());
+		Assert.assertEquals("Product count map is empty false", false, findByUser.getProductCountMap().isEmpty());
+		Assert.assertEquals("Product count map quantity is 3", 3, findByUser.getProductCountMap().get(bread).intValue());
+		Assert.assertEquals("Product map is empty false", false, findByUser.getProductsMap().isEmpty());
+		Assert.assertEquals("ProductList size is 3", 3, findByUser.getProductsMap().get(bread.getPrimaryKey()).size());
+		Assert.assertEquals("ProductList[0] is empty Bread.class", Bread.class, findByUser.getProductsMap().get(bread.getPrimaryKey()).get(0).getClass());
+	}
+
+	/* ShoppingBasket null, discount null, should throw AppException */
+	@Test
+	public void addDiscountTest1() {
+		ShoppingBasket basket = null;
+		Discount discount = null;
+		try {
+			shoppingBasketService.addDiscount(basket, discount);
+		} catch (AppException e) {
+			Assert.assertEquals("Message should be basketNullMessage", basketNullMessage, e.getMessage());
+		}
+	}
+
+	/* ShoppingBasket not null, discount null, should throw AppException */
+	@Test
+	public void addDiscountTest2() {
+		ShoppingBasket basket = new ShoppingBasket();
+		Discount discount = null;
+		try {
+			shoppingBasketService.addDiscount(basket, discount);
+		} catch (AppException e) {
+			Assert.assertEquals("Message should be discountNullMessage", discountNullMessage, e.getMessage());
+		}
+	}
+
+	/* One discount added */
+	@Test
+	public void addDiscountTest3() {
+		ShoppingBasket basket = new ShoppingBasket();
+		Discount discount = new FreeProductDiscount();
+
+		shoppingBasketService.addDiscount(basket, discount);
+
+		Assert.assertEquals("Discount size should be 1", 1, basket.getDiscounts().size());
+	}
+
+	/* Two same discounts added, discount size should be 1 */
+	@Test
+	public void addDiscountTest4() {
+		ShoppingBasket basket = new ShoppingBasket();
+		Discount discount = new FreeProductDiscount();
+
+		shoppingBasketService.addDiscount(basket, discount);
+		shoppingBasketService.addDiscount(basket, discount);
+
+		Assert.assertEquals("Discount size should be 1", 1, basket.getDiscounts().size());
+	}
+
+	/* Basket is null */
+	@Test
+	public void saveTest1() {
+		ShoppingBasket basket = null;
+		try {
+			shoppingBasketService.save(basket);
+		} catch (AppException e) {
+			Assert.assertEquals("Message should be basketNullMessage", basketNullMessage, e.getMessage());
+		}
+	}
+
+	/* Basket is null */
+	@Test
+	public void saveTest2() {
+		ShoppingBasket basket = new ShoppingBasket();
+		Product bread = new Bread("Bread", 1, 0, new Timestamp(new Date().getTime()));
+		shoppingBasketService.addProducts(basket, bread, 10);
+
+		Mockito.when(basketRepository.save(ArgumentMatchers.any(ShoppingBasket.class))).thenReturn(basket);
+
+		ShoppingBasket save = shoppingBasketService.save(basket);
+
+		Assert.assertEquals("TotalPriceWithDiscounts is 10", 10, save.getTotalPriceWithDiscounts(), DELTA);
+		Assert.assertEquals("TotalPriceWithoutDiscounts is 10", 10, save.getTotalPriceWithoutDiscounts(), DELTA);
+	}
+
+	/* Basket is null */
+	@Test
+	public void saveTest3() {
+		ShoppingBasket basket = new ShoppingBasket();
+		basket.setTotalBillDiscountPercentage(0.1);
+		Product bread = new Bread("Bread", 1, 0, new Timestamp(new Date().getTime()));
+		shoppingBasketService.addProducts(basket, bread, 10);
+
+		Mockito.when(basketRepository.save(ArgumentMatchers.any(ShoppingBasket.class))).thenReturn(basket);
+
+		ShoppingBasket save = shoppingBasketService.save(basket);
+
+		Assert.assertEquals("TotalPriceWithDiscounts is 9", 9, save.getTotalPriceWithDiscounts(), DELTA);
+		Assert.assertEquals("TotalPriceWithoutDiscounts is 10", 10, save.getTotalPriceWithoutDiscounts(), DELTA);
+	}
+
+	/* Basket is null */
+	@Test
+	public void emptyTest1() {
+		ShoppingBasket basket = null;
+		try {
+			shoppingBasketService.empty(basket);
+		} catch (AppException e) {
+			Assert.assertEquals("Message should be basketNullMessage", basketNullMessage, e.getMessage());
+		}
+	}
+
+	/* Basket is null */
+	@Test
+	public void emptyTest2() {
+		ShoppingBasket basket = new ShoppingBasket();
+		User user = new User();
+		basket.setUser(user);
+
+		shoppingBasketService.empty(basket);
+
+		Assert.assertEquals("User is user", user, basket.getUser());
+		Assert.assertEquals("Discounts are empty", true, basket.getDiscounts().isEmpty());
+		Assert.assertEquals("ProductCountMap is empty", true, basket.getProductCountMap().isEmpty());
+		Assert.assertEquals("ProductsMap are empty", true, basket.getProductsMap().isEmpty());
+		Assert.assertEquals("TotalBillDiscountPercentage is 0", 0, basket.getTotalBillDiscountPercentage(), DELTA);
+		Assert.assertEquals("TotalPriceWithDiscounts is 0", 0, basket.getTotalPriceWithDiscounts(), DELTA);
+		Assert.assertEquals("TotalPriceWithoutDiscounts is 0", 0, basket.getTotalPriceWithoutDiscounts(), DELTA);
+	}
+
+	/* Basket is null */
+	@Test
+	public void emptyTest3() {
+		ShoppingBasket basket = new ShoppingBasket();
+		User user = new User();
+		Product bread = new Bread("Bread", 1, 0, new Timestamp(new Date().getTime()));
+		shoppingBasketService.addProducts(basket, bread, 5);
+		basket.setTotalBillDiscountPercentage(0.5);
+		basket.setTotalPriceWithDiscounts(22);
+		basket.setTotalPriceWithoutDiscounts(30);
+		basket.setUser(user);
+
+		shoppingBasketService.empty(basket);
+
+		Assert.assertEquals("User is user", user, basket.getUser());
+		Assert.assertEquals("Discounts are empty", true, basket.getDiscounts().isEmpty());
+		Assert.assertEquals("ProductCountMap is empty", true, basket.getProductCountMap().isEmpty());
+		Assert.assertEquals("ProductsMap are empty", true, basket.getProductsMap().isEmpty());
+		Assert.assertEquals("TotalBillDiscountPercentage is 0", 0, basket.getTotalBillDiscountPercentage(), DELTA);
+		Assert.assertEquals("TotalPriceWithDiscounts is 0", 0, basket.getTotalPriceWithDiscounts(), DELTA);
+		Assert.assertEquals("TotalPriceWithoutDiscounts is 0", 0, basket.getTotalPriceWithoutDiscounts(), DELTA);
+	}
 }
