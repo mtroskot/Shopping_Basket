@@ -31,6 +31,7 @@ import com.mtroskot.model.entity.product.Bread;
 import com.mtroskot.model.entity.product.Product;
 import com.mtroskot.model.entity.product.ShoppingBasket;
 import com.mtroskot.repository.ShoppingBasketRepositroy;
+import com.mtroskot.security.AuthController;
 import com.mtroskot.security.JwtAuthenticationEntryPoint;
 import com.mtroskot.security.JwtTokenProvider;
 import com.mtroskot.service.ProductService;
@@ -67,6 +68,8 @@ public class BasketControllerTest {
 	private ShoppingBasketService shoppingBasketService;
 	@MockBean
 	private ShoppingBasketRepositroy shoppingBasketRepositroy;
+	@MockBean 
+	private AuthController authController;
 
 	@Test
 	@WithMockUser(username = "testuser", password = "testpass", authorities = "ROLE_USER")
@@ -75,10 +78,10 @@ public class BasketControllerTest {
 		ShoppingBasket shoppingBasket = new ShoppingBasket();
 		shoppingBasket.setUser(user);
 
-		Mockito.when(userService.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(user));
+		Mockito.when(authController.getCurrentUser()).thenReturn(user);
 		Mockito.when(shoppingBasketService.findByUser(ArgumentMatchers.any(User.class))).thenReturn(shoppingBasket);
 
-		mockMvc.perform(get("/api/basket/get/1").contentType(MediaType.APPLICATION_JSON).characterEncoding("UTF-8")).andDo(print()).andExpect(status().is(200))
+		mockMvc.perform(get("/api/basket/getUserBasket").contentType(MediaType.APPLICATION_JSON).characterEncoding("UTF-8")).andDo(print()).andExpect(status().is(200))
 				.andExpect(content().json(objectMapper.writeValueAsString(shoppingBasket)));
 	}
 
@@ -90,7 +93,7 @@ public class BasketControllerTest {
 		shoppingBasket.setUser(user);
 		Product bread = new Bread("Bread", 1, 0, new Timestamp(new Date().getTime()));
 
-		Mockito.when(userService.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(user));
+		Mockito.when(authController.getCurrentUser()).thenReturn(user);
 		Mockito.when(shoppingBasketService.findByUser(ArgumentMatchers.any(User.class))).thenReturn(shoppingBasket);
 		Mockito.when(productService.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(bread));
 		Mockito.when(shoppingBasketService.save(ArgumentMatchers.any(ShoppingBasket.class))).thenReturn(shoppingBasket);
@@ -106,7 +109,7 @@ public class BasketControllerTest {
 		ShoppingBasket shoppingBasket = new ShoppingBasket();
 		shoppingBasket.setUser(user);
 
-		Mockito.when(userService.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(user));
+		Mockito.when(authController.getCurrentUser()).thenReturn(user);
 		Mockito.when(shoppingBasketService.findByUser(ArgumentMatchers.any(User.class))).thenReturn(shoppingBasket);
 		Mockito.when(shoppingBasketService.save(ArgumentMatchers.any(ShoppingBasket.class))).thenReturn(shoppingBasket);
 		

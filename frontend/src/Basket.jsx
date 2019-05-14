@@ -64,8 +64,7 @@ class Basket extends Component {
 
   emptyBasket = () => {
     this.request(`http://localhost:8084/api/basket/empty`, {
-      method: "POST",
-      body: this.state.user.id
+      method: "POST"
     })
       .then(response => response.json())
       .then(basket => {
@@ -74,7 +73,7 @@ class Basket extends Component {
   };
 
   getBasketByUser = () => {
-    this.request(`http://localhost:8084/api/basket/get/${this.state.user.id}`, {
+    this.request(`http://localhost:8084/api/basket/getUserBasket`, {
       method: "GET"
     })
       .then(response => response.json())
@@ -112,8 +111,7 @@ class Basket extends Component {
     const { user, quantityToAdd, productToAdd } = this.state;
     try {
       const response = await this.request(`http://localhost:8084/api/basket/add/${quantityToAdd}/${productToAdd}`, {
-        method: "POST",
-        body: user.id
+        method: "POST"
       });
       if (response.status === 201) {
         alert("Product added");
@@ -135,9 +133,7 @@ class Basket extends Component {
     const { amountOfProductsToBuy, productToBuy, amountOfProductsToGetFree, productToGetForFree } = freeProductDiscount;
     try {
       const response = await this.request(
-        `http://localhost:8084/api/basket/freeProductDiscount/${
-          user.id
-        }/${amountOfProductsToBuy}/${productToBuy}/${amountOfProductsToGetFree}/${productToGetForFree}`,
+        `http://localhost:8084/api/basket/freeProductDiscount/${amountOfProductsToBuy}/${productToBuy}/${amountOfProductsToGetFree}/${productToGetForFree}`,
         {
           method: "POST"
         }
@@ -162,7 +158,7 @@ class Basket extends Component {
     const { amountOfProductsToBuy, productToBuy, discountPercentage, productToGetDiscount } = productPriceDiscount;
     try {
       const response = await this.request(
-        `http://localhost:8084/api/basket/productPriceDiscount/${user.id}/${amountOfProductsToBuy}/${productToBuy}/${discountPercentage /
+        `http://localhost:8084/api/basket/productPriceDiscount/${amountOfProductsToBuy}/${productToBuy}/${discountPercentage /
           100}/${productToGetDiscount}`,
         {
           method: "POST"
