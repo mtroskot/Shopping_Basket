@@ -1,13 +1,13 @@
 package com.mtroskot.controller;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.Optional;
 
 import org.junit.Test;
@@ -30,6 +30,7 @@ import com.mtroskot.model.entity.auth.User;
 import com.mtroskot.model.entity.product.Bread;
 import com.mtroskot.model.entity.product.Product;
 import com.mtroskot.model.entity.product.ShoppingBasket;
+import com.mtroskot.repository.ShoppingBasketRepositroy;
 import com.mtroskot.security.JwtAuthenticationEntryPoint;
 import com.mtroskot.security.JwtTokenProvider;
 import com.mtroskot.service.ProductService;
@@ -64,6 +65,8 @@ public class BasketControllerTest {
 	private ProductService productService;
 	@MockBean
 	private ShoppingBasketService shoppingBasketService;
+	@MockBean
+	private ShoppingBasketRepositroy shoppingBasketRepositroy;
 
 	@Test
 	@WithMockUser(username = "testuser", password = "testpass", authorities = "ROLE_USER")
@@ -76,6 +79,38 @@ public class BasketControllerTest {
 		Mockito.when(shoppingBasketService.findByUser(ArgumentMatchers.any(User.class))).thenReturn(shoppingBasket);
 
 		mockMvc.perform(get("/api/basket/get/1").contentType(MediaType.APPLICATION_JSON).characterEncoding("UTF-8")).andDo(print()).andExpect(status().is(200))
+				.andExpect(content().json(objectMapper.writeValueAsString(shoppingBasket)));
+	}
+
+	@Test
+	@WithMockUser(username = "testuser", password = "testpass", authorities = "ROLE_USER")
+	public void addProductTest() throws Exception {
+		User user = new User();
+		ShoppingBasket shoppingBasket = new ShoppingBasket();
+		shoppingBasket.setUser(user);
+		Product bread = new Bread("Bread", 1, 0, new Timestamp(new Date().getTime()));
+
+		Mockito.when(userService.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(user));
+		Mockito.when(shoppingBasketService.findByUser(ArgumentMatchers.any(User.class))).thenReturn(shoppingBasket);
+		Mockito.when(productService.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(bread));
+		Mockito.when(shoppingBasketService.save(ArgumentMatchers.any(ShoppingBasket.class))).thenReturn(shoppingBasket);
+
+		mockMvc.perform(post("/api/basket/add/2/1").contentType(MediaType.APPLICATION_JSON).content("1")).andDo(print()).andExpect(status().is(201))
+				.andExpect(content().json(objectMapper.writeValueAsString(shoppingBasket)));
+	}
+
+	@Test
+	@WithMockUser(username = "testuser", password = "testpass", authorities = "ROLE_USER")
+	public void emptyBasketTest() throws Exception {
+		User user = new User();
+		ShoppingBasket shoppingBasket = new ShoppingBasket();
+		shoppingBasket.setUser(user);
+
+		Mockito.when(userService.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(user));
+		Mockito.when(shoppingBasketService.findByUser(ArgumentMatchers.any(User.class))).thenReturn(shoppingBasket);
+		Mockito.when(shoppingBasketService.save(ArgumentMatchers.any(ShoppingBasket.class))).thenReturn(shoppingBasket);
+		
+		mockMvc.perform(post("/api/basket/empty").contentType(MediaType.APPLICATION_JSON).content("1")).andDo(print()).andExpect(status().is(200))
 				.andExpect(content().json(objectMapper.writeValueAsString(shoppingBasket)));
 	}
 

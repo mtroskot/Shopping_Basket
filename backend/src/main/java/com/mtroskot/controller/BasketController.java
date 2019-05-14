@@ -67,8 +67,8 @@ public class BasketController {
 			ShoppingBasket basket = shoppingBasketService.findByUser(user);
 			Product product = productService.findById(Long.parseLong(productId)).orElseThrow(() -> new AppException("No product found for product id " + productId));
 			shoppingBasketService.addProducts(basket, product, Integer.parseInt(quantity));
-			shoppingBasketService.save(basket);
-			return new ResponseEntity<ShoppingBasket>(basket, HttpStatus.CREATED);
+			ShoppingBasket savedBasket = shoppingBasketService.save(basket);
+			return new ResponseEntity<ShoppingBasket>(savedBasket, HttpStatus.CREATED);
 		} catch (NumberFormatException e) {
 			log.error(e.getMessage());
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
@@ -103,8 +103,8 @@ public class BasketController {
 			Discount freeProductDiscount = new FreeProductDiscount(Integer.parseInt(quantityToBuy), pToBuy, Integer.parseInt(quantityToGet), pToGetFree);
 
 			shoppingBasketService.addDiscount(basket, freeProductDiscount);
-			shoppingBasketService.save(basket);
-			return new ResponseEntity<ShoppingBasket>(basket, HttpStatus.CREATED);
+			ShoppingBasket savedBasket = shoppingBasketService.save(basket);
+			return new ResponseEntity<ShoppingBasket>(savedBasket, HttpStatus.CREATED);
 		} catch (NumberFormatException e) {
 			log.error(e.getMessage());
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
@@ -139,8 +139,8 @@ public class BasketController {
 			Discount priceDiscount = new ProductPriceDiscount(Integer.parseInt(quantityToBuy), pToBuy, Double.parseDouble(discountPercentage), pToGetFree);
 
 			shoppingBasketService.addDiscount(basket, priceDiscount);
-			shoppingBasketService.save(basket);
-			return new ResponseEntity<ShoppingBasket>(basket, HttpStatus.CREATED);
+			ShoppingBasket savedBasket = shoppingBasketService.save(basket);
+			return new ResponseEntity<ShoppingBasket>(savedBasket, HttpStatus.CREATED);
 		} catch (NumberFormatException e) {
 			log.error(e.getMessage());
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
